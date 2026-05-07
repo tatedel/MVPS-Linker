@@ -7,7 +7,13 @@ correctly along the way.
 
 **Installation**
 
-
+1. Download "mvps-linker-0.0.1.vsix" from this repo
+2. Run the following command in your terminal:
+```bash
+code --install-extension mvps-linker-0.0.1.vsix
+```
+3. Reopen VS Code
+   
 **Usage**
 
 Now that the extension is installed, ensure that the VEX extension is also running.
