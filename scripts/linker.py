@@ -13,8 +13,24 @@ for name in possible_source_directories:
         break
 
 if source_directory is None:
-    print("MVPS Error: Source directory not found. Please make a folder with a valid name and place your scripts inside it.")
+    print(
+        "MVPS Error: Source directory not found. " 
+        "Please make a folder with a valid name and place your scripts inside it."
+    )
     exit(1)
+
+def parse_file(path):
+    try:
+        source = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        print(f"MVPS Error: '{path.name}' is not valid UTF-8.")
+        exit(1)
+
+    try:
+        return ast.parse(source)
+    except SyntaxError as error:
+        print(f"MVPS Error: Syntax error in '{path.name}' "f"line {error.lineno}: {error.msg}")
+        exit(1)
 
 class DangerousAssignmentChecker(ast.NodeVisitor):
     def __init__(self):
@@ -91,9 +107,11 @@ class Flattener(ast.NodeTransformer):
         for alias in node.names:
             if alias.name not in self.module_names:
                 kept.append(alias)
+
         if kept:
             line = ast.unparse(ast.Import(names=kept))
             self.external_imports.add(line)
+
         return None
 
     def visit_Global(self, node):
@@ -111,6 +129,7 @@ class Flattener(ast.NodeTransformer):
     def visit_FunctionDef(self, node):
         if node.name in self.rename_map:
             node.name = self.rename_map[node.name]
+
         self.generic_visit(node)
         return node
 
@@ -119,6 +138,7 @@ class Flattener(ast.NodeTransformer):
             if isinstance(target, ast.Name):
                 if target.id in self.rename_map:
                     target.id = self.rename_map[target.id]
+
         self.generic_visit(node)
         return node
 
@@ -127,19 +147,24 @@ class Flattener(ast.NodeTransformer):
             node.id = self.alias_map[node.id]
         elif node.id in self.rename_map:
             node.id = self.rename_map[node.id]
+
         return node
 
     def visit_Attribute(self, node):
         self.generic_visit(node)
+
         if isinstance(node.value, ast.Name):
             module_name = node.value.id
+
             if module_name in self.alias_map:
                 module_name = self.alias_map[module_name]
+
             if module_name in self.module_names:
                 return ast.Name(
                     id=f"{module_name}_{node.attr}",
                     ctx=node.ctx
                 )
+
         return node
 
 module_symbols = {}
@@ -147,12 +172,20 @@ module_paths = {}
 
 for root, directories, files in os.walk(source_directory):
     for file in files:
-        if not file.endswith(".py"): continue
+        if not file.endswith(".py"):
+            continue
 
         path = Path(root) / file
         module = path.stem
-        tree = ast.parse(path.read_text(encoding="utf-8"))
 
+        if module in module_paths:
+            print(
+                f"MVPS Error: Duplicate module name '{module}'. "
+                f"Rename one of the files."
+            )
+            exit(1)
+
+        tree = parse_file(path)
         collector = SymbolCollector()
         collector.visit(tree)
         danger_checker = DangerousAssignmentChecker()
@@ -168,14 +201,19 @@ for root, directories, files in os.walk(source_directory):
         module_symbols[module] = collector.symbols
         module_paths[module] = path
 
+if not module_paths:
+    print(f"MVPS Error: No Python files found in '{source_directory}'.")
+    exit(1)
+
 module_names = set(module_symbols.keys())
+
 dependencies = {
     module: set()
     for module in module_names
 }
 
 for module, path in module_paths.items():
-    tree = ast.parse(path.read_text(encoding="utf-8"))
+    tree = parse_file(path)
     collector = DependencyCollector(module_names)
     collector.visit(tree)
 
@@ -194,15 +232,16 @@ def topo_sort(dependencies):
 
         if module in visited: return
         visiting.add(module)
+
         for dependency in dependencies.get(module, []):
             visit(dependency)
-
         visiting.remove(module)
         visited.add(module)
         order.append(module)
 
     for module in dependencies:
         visit(module)
+
     return order
 
 try:
@@ -216,28 +255,20 @@ external_imports = set()
 total = len(sorted_modules)
 
 for index, module in enumerate(sorted_modules, 1):
-    print(f"MVPS: [{index}/{total}] linking {module}")
-
     path = module_paths[module]
-    tree = ast.parse(path.read_text(encoding="utf-8"))
-    rename_map = {
-        symbol: f"{module}_{symbol}"
-        for symbol in module_symbols[module]
-    }
+    tree = parse_file(path)
 
+    rename_map = {symbol: f"{module}_{symbol}" for symbol in module_symbols[module]}
     alias_collector = AliasCollector(module_names)
     alias_collector.visit(tree)
     alias_map = alias_collector.alias_map
-
     flattener = Flattener(module, rename_map, alias_map, module_names)
+
     tree = flattener.visit(tree)
     external_imports |= flattener.external_imports
-
     ast.fix_missing_locations(tree)
     module_code = ast.unparse(tree)
-    output_blocks.append(
-        f"# {path.name}\n{module_code}"
-    )
+    output_blocks.append(f"# {path.name}\n{module_code}")
 
 src_dir = output_file.parent
 src_dir.mkdir(exist_ok=True)
@@ -252,7 +283,6 @@ if external_imports:
 
 final_code.extend(output_blocks)
 final_text = "\n".join(final_code)
-
 while "\n\n\n" in final_text:
     final_text = final_text.replace("\n\n\n", "\n\n")
 

@@ -132,12 +132,19 @@ export function activate(context: vscode.ExtensionContext) {
     channel.appendLine(`MVPS: Running in: ${workspaceRoot}`);
 
     cp.execFile(pythonPath, [scriptPath], { cwd: workspaceRoot }, (err, stdout, stderr) => {
-      if (stdout) {channel.appendLine(stdout);};
-      if (stderr) {channel.appendLine(stderr);};
+    if (stdout.trim()) {
+        channel.appendLine(stdout.trim());
+    }
+
+    if (stderr.trim()) {
+        channel.appendLine(stderr.trim());
+    }
 
       if (err) {
-        channel.appendLine(`MVPS Error: ${err.message}`);
-        vscode.window.showErrorMessage("MVPS Linker failed. See Output > MVPS Linker.");
+          vscode.window.showErrorMessage(
+              "MVPS Linker failed. See Output > MVPS Linker."
+          );
+          return;
       } else {
         channel.appendLine("MVPS: Combined program written.");
         vscode.window.showInformationMessage("MVPS: Combined program written.");
@@ -164,12 +171,19 @@ export function activate(context: vscode.ExtensionContext) {
     channel.appendLine("MVPS: Running linker...");
 
     cp.execFile(pythonPath, [scriptPath], { cwd: workspaceRoot }, (err, stdout, stderr) => {
-      if (stdout) {channel.appendLine(stdout);};
-      if (stderr) {channel.appendLine(stderr);};
+    if (stdout.trim()) {
+        channel.appendLine(stdout.trim());
+    }
+
+    if (stderr.trim()) {
+        channel.appendLine(stderr.trim());
+    }
 
       if (err) {
-        channel.appendLine(`MVPS Error: ${err.message}`);
-        vscode.window.showErrorMessage("MVPS Linker failed. See Output > MVPS Linker.");
+          vscode.window.showErrorMessage(
+              "MVPS Linker failed. See Output > MVPS Linker."
+          );
+          return;
       } else {
         channel.appendLine("MVPS: combined.py written. Downloading...");
 
