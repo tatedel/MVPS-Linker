@@ -13,11 +13,10 @@ for dir_name in POSSIBLE_SOURCE_DIRS:
         break
 
 if not SOURCE_DIR.exists():
-    print("MVPS Error: Source directory not found. Please make a folder named 'codebase' and place your scripts inside it.")
+    print("MVPS Error: Source directory not found. Please make a folder with a valid name and place your scripts inside it.")
     exit(1)
 
 external_imports = set()
-
 class DangerousAssignmentChecker(ast.NodeVisitor):
     def __init__(self):
         self.dangerous = []
@@ -26,12 +25,10 @@ class DangerousAssignmentChecker(ast.NodeVisitor):
         for target in node.targets:
             if isinstance(target, ast.Name):
                 name = target.id
-
                 if name and name[0].isupper():
                     self.dangerous.append(
                         (name, node.lineno)
                     )
-
         self.generic_visit(node)
 
 class SymbolCollector(ast.NodeVisitor):
@@ -46,9 +43,7 @@ class SymbolCollector(ast.NodeVisitor):
         for target in node.targets:
             if isinstance(target, ast.Name):
                 self.symbols.add(target.id)
-
         self.generic_visit(node)
-
 
 class DependencyCollector(ast.NodeVisitor):
     def __init__(self, module_names):
@@ -67,9 +62,7 @@ class DependencyCollector(ast.NodeVisitor):
     def visit_Attribute(self, node):
         if isinstance(node.value, ast.Name):
             self.referenced.add(node.value.id)
-
         self.generic_visit(node)
-
 
 class AliasCollector(ast.NodeVisitor):
     def __init__(self, module_names):
@@ -88,7 +81,6 @@ class AliasCollector(ast.NodeVisitor):
                 local = alias.asname if alias.asname else alias.name
                 self.alias_map[local] = f"{node.module}_{original}"
 
-
 class Flattener(ast.NodeTransformer):
     def __init__(self, module, rename_map, alias_map, module_names):
         self.module = module
@@ -102,23 +94,19 @@ class Flattener(ast.NodeTransformer):
         for alias in node.names:
             if alias.name not in self.module_names:
                 kept.append(alias)
-
         if kept:
             line = ast.unparse(ast.Import(names=kept))
             external_imports.add(line)
-
         return None
 
     def visit_ImportFrom(self, node):
         if node.module not in self.module_names:
             external_imports.add(ast.unparse(node))
-
         return None
 
     def visit_FunctionDef(self, node):
         if node.name in self.rename_map:
             node.name = self.rename_map[node.name]
-
         self.generic_visit(node)
         return node
 
@@ -127,48 +115,38 @@ class Flattener(ast.NodeTransformer):
             if isinstance(target, ast.Name):
                 if target.id in self.rename_map:
                     target.id = self.rename_map[target.id]
-
         self.generic_visit(node)
         return node
 
     def visit_Name(self, node):
         if node.id in self.alias_map:
             node.id = self.alias_map[node.id]
-
         elif node.id in self.rename_map:
             node.id = self.rename_map[node.id]
-
         return node
 
     def visit_Attribute(self, node):
         self.generic_visit(node)
-
         if isinstance(node.value, ast.Name):
             module_name = node.value.id
-
             if module_name in self.alias_map:
                 module_name = self.alias_map[module_name]
-
             if module_name in self.module_names:
                 return ast.Name(
                     id=f"{module_name}_{node.attr}",
                     ctx=node.ctx
                 )
-
         return node
-
 
 module_symbols = {}
 module_paths = {}
 
 for root, dirs, files in os.walk(SOURCE_DIR):
     for file in files:
-        if not file.endswith(".py"):
-            continue
+        if not file.endswith(".py"): continue
 
         path = Path(root) / file
         module = path.stem
-
         tree = ast.parse(path.read_text(encoding="utf-8"))
 
         collector = SymbolCollector()
@@ -187,7 +165,6 @@ for root, dirs, files in os.walk(SOURCE_DIR):
         module_paths[module] = path
 
 module_names = set(module_symbols.keys())
-
 dependencies = {
     module: set()
     for module in module_names
@@ -195,7 +172,6 @@ dependencies = {
 
 for module, path in module_paths.items():
     tree = ast.parse(path.read_text(encoding="utf-8"))
-
     collector = DependencyCollector(module_names)
     collector.visit(tree)
 
@@ -211,47 +187,35 @@ def topo_sort(dependencies):
 
     def visit(module):
         if module in visiting:
-            raise ValueError(
-                f"MVPS Error: Circular dependency detected involving '{module}'."
-            )
+            raise ValueError(f"MVPS Error: Circular dependency detected involving '{module}'.")
 
-        if module in visited:
-            return
-
+        if module in visited: return
         visiting.add(module)
-
         for dep in dependencies.get(module, []):
             visit(dep)
 
         visiting.remove(module)
         visited.add(module)
-
         order.append(module)
 
     for module in dependencies:
         visit(module)
-
     return order
-
 
 try:
     sorted_modules = topo_sort(dependencies)
-
 except ValueError as error:
     print(str(error))
     exit(1)
 
 output_blocks = []
-
 total = len(sorted_modules)
 
 for index, module in enumerate(sorted_modules, 1):
     print(f"MVPS: [{index}/{total}] linking {module}")
 
     path = module_paths[module]
-
     tree = ast.parse(path.read_text(encoding="utf-8"))
-
     rename_map = {
         symbol: f"{module}_{symbol}"
         for symbol in module_symbols[module]
@@ -259,7 +223,6 @@ for index, module in enumerate(sorted_modules, 1):
 
     alias_collector = AliasCollector(module_names)
     alias_collector.visit(tree)
-
     alias_map = alias_collector.alias_map
 
     tree = Flattener(
@@ -270,9 +233,7 @@ for index, module in enumerate(sorted_modules, 1):
     ).visit(tree)
 
     ast.fix_missing_locations(tree)
-
     module_code = ast.unparse(tree)
-
     output_blocks.append(
         f"# {path.name}\n{module_code}"
     )
@@ -284,7 +245,6 @@ for file in src_dir.glob("*.py"):
     file.unlink()
 
 final_code = []
-
 if external_imports:
     final_code.extend(sorted(external_imports))
     final_code.append("")

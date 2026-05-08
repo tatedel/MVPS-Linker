@@ -1,8 +1,7 @@
 <img width="128" height="128" alt="image" src="https://github.com/user-attachments/assets/9ac61b63-f594-4101-8551-2df7a3af475d" />
 
 
-⚠️ This extension is in early stages of development and should be considered experimental. While I will be actively using and improving it throughout the VEX season, 
-I cannot guarantee full reliability, stability, or safety. It is not recommended for use in critical contexts. If you require a stable and fully tested tool, 
+⚠️ This extension is in early stages of development and should be considered an experimental tech-demo. While I will be actively using and improving it throughout the VEX season, I cannot guarantee full reliability, stability, or safety. It is not recommended for use in critical contexts. If you require a stable and fully tested tool, 
 you may prefer to wait until a more mature release in a future season.
 
 **Description**
