@@ -30,7 +30,7 @@ To create a VEX multifile Python project:
 - Create a folder inside the root directory named "codebase", "code", or "scripts"
 - Insert files that you would like to be linked inside that folder
 
-When you are ready to download the code to the brain, click the "Download" button in the extension's UI. It should automatically download to the brain. Currently, the "Combine" button is primarily for debugging and does not cache the product.
+When you are ready to download the code to the brain, click the "Download" button in the extension's UI. It should automatically download to the brain. If the print message gets stuck on "Downloading...", please ensure a device is detected inside the actual VEX extension. Currently, the "Combine" button is primarily for debugging and does not cache the product.
 
 <table>
 <tr>
