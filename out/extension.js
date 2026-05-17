@@ -81,8 +81,6 @@ class MVPSLinkerViewProvider {
             background: var(--vscode-sideBar-background);
           }
 
-          h2 { font-size: 16px; margin: 0 0 12px 0; }
-
           button {
             border: none;
             padding: 8px 16px;
@@ -108,10 +106,11 @@ class MVPSLinkerViewProvider {
           }
 
           .docs-btn:hover { background: var(--vscode-editorHoverWidget-background); }
+
+
         </style>
       </head>
       <body>
-        <h2>MVPS Linker</h2>
         <button class="primary-btn" onclick="createTemplate()">Create Template</button>
         <button class="primary-btn" onclick="buildAndDownload()">Download</button>
         <button class="primary-btn" onclick="run()">Combine</button>
