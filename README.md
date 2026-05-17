@@ -14,7 +14,7 @@ The MVPS Linker (Multifile VEX Python Support) extension enables multifile Pytho
 ---
 
 - Ensure VS Code, the VEX Extension, and Python 3.9 or newer are installed
-- Download the raw code of the "mvps-linker-0.0.3.vsix" file from this repo
+- Download the raw code of the .vsix file from this repo
 - Drag the file into the extensions bar in VS Code
 - Click install if prompted
 
@@ -30,7 +30,7 @@ To create a VEX multifile Python project:
 - Create a folder inside the root directory named "codebase", "code", or "scripts"
 - Insert files that you would like to be linked inside that folder
 
-When you are ready to download the code to the brain, click the "Download" button in the extension's UI. It should automatically download to the brain. Currently, the "Combine" button is primarily for debugging and does not cache the product.
+When you are ready to download the code to the brain, click the "Download" button in the extension's UI. It should automatically download to the brain. If the print message gets stuck on "Downloading...", please ensure a device is detected inside the actual VEX extension. Currently, the "Combine" button is primarily for debugging and does not cache the product.
 
 <table>
 <tr>
@@ -50,12 +50,12 @@ When you are ready to download the code to the brain, click the "Download" butto
 **Errors**
 ---
 
-The current way to debug is to upload to the brain, find the line where the error occurred in the linked file, locate that line's file of origin, and then use the error's type to try to solve it. I plan to add a fully functional (optional) linter in the future to avoid this detour. Here are the two scenarios the extension catches pre-link so far (although this will be fully rewritten soon):
+The current debugging method is to upload to the brain, find the line where the error occurred in the linked file, locate that line's file of origin, and then use the error's type to attempt to solve it. I plan to add a fully functional (optional) linter in the future to avoid this detour. Here are the two scenarios the extension catches pre-link so far (although this will be fully rewritten soon):
 
 - Cyclic require (two or more files importing one another simultaneously)
 - Naming conflicts (Brain = Brain() will cause bugs)
 
-Unrecognized errors the extension encounters while linking will be printed as is. You can guarantee an error is from this particular extension if it is prefaced with "MVPS Error: ..." Otherwise, it's likely safe to assume another party caused the error.
+Unrecognized errors the extension encounters will be printed as is. You can guarantee an error is from this particular extension if it is prefaced with "MVPS Error: ..." Otherwise, it's likely safe to assume another party caused the error.
 
 **Planned Features**
 ---
